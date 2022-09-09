@@ -26,6 +26,13 @@
     ```
 6. You may build the docs by sphinx with
     ```sh
-    cd ./stem/docs
+    cd ./docs
     make html
     ```
+    After that, documentation in html format should appear at `stem_framework/docs/build/html/index.html`
+
+7. Alternatively, you can build the docs with `setup.py`:
+    ```sh
+    python setup.py build_sphinx
+    ```
+    The second method isn't needed and is added only because the teacher requires it.
