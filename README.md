@@ -1,3 +1,3 @@
-# Advanced python homework
+# Python Course Homework
 
-Before perform of new homework assignment merge top commit of main branch in your repository.
+This is the homework for [Advanced Python course](https://github.com/Zelenyy/advanced-python) by Scientific Programming Centre.
