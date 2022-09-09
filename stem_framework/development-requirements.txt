@@ -1,3 +1,4 @@
 sphinx ~= 5.1.1
 pylint ~= 2.15.2
 mypy   ~= 0.971
+build  ~= 0.8.0
