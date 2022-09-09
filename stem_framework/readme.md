@@ -24,3 +24,8 @@
     import stem
     stem.SayHi()
     ```
+6. You may build the docs by sphinx with
+    ```sh
+    cd ./stem/docs
+    make html
+    ```
