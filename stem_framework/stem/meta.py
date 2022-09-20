@@ -28,8 +28,8 @@ class SpecificationError(Exception):
 @dataclass
 class MetaFieldError:
     required_key: str
-    required_types: Optional[tuple[type]] = None
-    presented_type: Optional[type] = None
+    required_types: Type | Tuple[Type, ...] | None = None
+    presented_type: Type | None = None
     presented_value: Any = None
 
 
@@ -37,12 +37,57 @@ class MetaVerification:
 
     def __init__(self, *errors: Union[MetaFieldError, "MetaVerification"]):
         self.error = errors
-        # TODO("checked_success")
+        # why not self.errors?
+
+        self.checked_success = errors == ()
+        print(errors)
+
 
     @staticmethod
     def verify(meta: Meta,
                specification: Optional[Specification] = None) -> "MetaVerification":
-        ...  # TODO()
+
+        if is_dataclass(meta):
+            meta_keys = meta.__dataclass_fields__.keys()
+        else: 
+            # meta is dict
+            meta_keys = meta.keys()
+
+        if is_dataclass(specification):
+            specification_keys = specification.__dataclass_fields__.keys()
+        else:
+            # specification was tuple of pairs
+            specification = dict(specification)
+            specification_keys = specification.keys()
+
+        errors = []
+        for required_key in specification_keys:
+            if is_dataclass(specification):
+                required_types = specification.__dataclass_fields__[required_key].type
+            else:
+                # specification was tuple of pairs of types and now is dict
+                required_types = specification[required_key]
+
+            if required_key in meta_keys:
+                presented_value = get_meta_attr(meta, required_key)
+                presented_type = type(presented_value)
+                if not issubclass(presented_type, required_types):
+                    errors.append(
+                        MetaFieldError(
+                            required_key = required_key,
+                            required_types = required_types,
+                            presented_value = presented_value,
+                            presented_type = presented_type
+                        )
+                    )
+            else:
+                errors.append(
+                    MetaFieldError(
+                        required_key = required_key,
+                        required_types = required_types
+                    )
+                )
+        return MetaVerification(*errors)
 
 
 def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Optional[Any]:
@@ -76,7 +121,7 @@ def update_meta(meta: Meta, **kwargs):
     print(a)    # {'position': 1, 'velocity': 2}
     ```
 
-    For a dataclass instance, if the field does not exist, a new **hidden** field will be created, which will not be shown in the output of `__repr__()`
+    For a dataclass instance, if the field does not exist, a new **hidden** field will be created, which will not be added to `meta.__dataclass_fields__ `and will not be shown in the output of `__repr__()`
 
     ```python
     @dataclass
