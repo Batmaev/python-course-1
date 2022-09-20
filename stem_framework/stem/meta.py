@@ -46,8 +46,24 @@ class MetaVerification:
 
 
 def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Optional[Any]:
-    ...
-    # TODO()
+
+    # maybe 'meta' is dict:
+    try:
+        return meta[key]
+    except KeyError:
+        # 'meta' is dict but doesn't have required field
+        return default
+    except TypeError:
+        # 'meta' is not a dict => we will check next option
+        pass
+
+    # maybe 'meta' is dataclass:
+    try:
+        return getattr(meta, key)
+    except AttributeError:
+        # meta probably is a dataclass but doesn't have the required field
+        return default
+
 
 
 def update_meta(meta: Meta, **kwargs):
