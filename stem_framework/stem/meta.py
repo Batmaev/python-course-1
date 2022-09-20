@@ -6,14 +6,19 @@ Based on the metadata and with the help of the metadata processor, Mr. Nozik dec
 """
 
 from dataclasses import dataclass
-from typing import Optional, Any, Union
+from typing import Optional, Any, Tuple, Type, Union
+
+from stem.core import Dataclass
 
 
-Meta = ... # TODO()
+Meta = dict | Dataclass
 
-SpecificationField = ... # TODO()
+SpecificationField = Tuple[
+    Any,                                            # Key
+    Type | Tuple[Type, ...] | 'SpecificationField'  # Value
+]
 
-Specification = ... # TODO()
+Specification = Dataclass | Tuple[SpecificationField, ...]
 
 
 class SpecificationError(Exception):
