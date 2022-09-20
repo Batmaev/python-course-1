@@ -1,8 +1,15 @@
 from typing import Optional, Any, Protocol
+import re
 
 
 def pascal_case_to_snake_case(name: str) -> str:
-    ... # TODO()
+    """Вставляет '_' перед каждой заглавной буквой, 
+    если после неё идёт маленькая и она не стоит в начале строки"""
+    return re.sub(
+        r"(?<!^)[A-Z][a-z]",
+        r"_\g<0>",
+        name
+    ).lower()
 
 
 
@@ -11,7 +18,12 @@ class Named:
 
     @property
     def name(self):
-        ... # TODO()
+        if self._name is not None:
+            return self._name
+        else:
+            return pascal_case_to_snake_case(
+                self.__class__.__name__
+            )
 
 
 class Dataclass(Protocol):
