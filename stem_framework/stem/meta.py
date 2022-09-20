@@ -5,7 +5,7 @@ Alexander Nozik in his pet-project 'DataForge' sees metadata as a user-defined t
 Based on the metadata and with the help of the metadata processor, Mr. Nozik decides what to do.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
 from typing import Optional, Any, Tuple, Type, Union
 
 from stem.core import Dataclass
@@ -67,5 +67,36 @@ def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Opt
 
 
 def update_meta(meta: Meta, **kwargs):
-    ...
-    # TODO()
+    """Decides whether 'meta' is a dataclass or a dict
+    and then updates existing fields or cretes new ones.
+    
+    ```python
+    a = {'position': 0}
+    update_meta(a, position = 1, velocity = 2)
+    print(a)    # {'position': 1, 'velocity': 2}
+    ```
+
+    For a dataclass instance, if the field does not exist, a new **hidden** field will be created, which will not be shown in the output of `__repr__()`
+
+    ```python
+    @dataclass
+    class Data:
+        position: float
+    
+    my_data = Data(0.0)
+    update_meta(my_data, position = 1.0, velocity = 2.0)
+
+    print(my_data)          # Data(position=1.0)
+    print(my_data.velocity) # 2.0
+    ```
+
+    The field `my_data.velocity` was created but `__repr__()` wasn't aware.
+    """
+
+    if is_dataclass(meta):
+        for k, v in kwargs.items():
+            setattr(meta, k, v)
+    else:
+        # then it should be a dict
+        for k, v in kwargs.items():
+            meta[k] = v
