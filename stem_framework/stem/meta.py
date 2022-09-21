@@ -51,9 +51,11 @@ class MetaVerification:
 
         if is_dataclass(meta):
             meta_keys = meta.__dataclass_fields__.keys()
-        else: 
-            # meta is dict
+        elif isinstance(meta, dict): 
             meta_keys = meta.keys()
+        else:
+            # we may encounter this case during recursion
+            meta_keys = ()
 
         if is_dataclass(specification):
             specification_keys = specification.__dataclass_fields__.keys()

@@ -79,7 +79,11 @@ class CoreTest(TestCase):
             ('g', (
                 ('n', float),
                 ('e', MetaNested),
-                ('g', str)
+                ('g', (
+                    ('n', float),
+                    ('e', MetaNested),
+                    ('g', str)
+                ))
             ))
         )
 
