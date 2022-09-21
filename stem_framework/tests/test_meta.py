@@ -71,3 +71,17 @@ class CoreTest(TestCase):
 
         verification = MetaVerification.verify(meta_nested, MetaNested)
         self.assertTrue(verification.checked_success)
+
+
+        wrong_specification = (
+            ('n', float), 
+            ('e', Example), 
+            ('g', (
+                ('n', float),
+                ('e', MetaNested),
+                ('g', str)
+            ))
+        )
+
+        verification = MetaVerification.verify(meta_nested, wrong_specification)
+        self.assertFalse(verification.checked_success)
