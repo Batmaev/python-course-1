@@ -130,7 +130,7 @@ def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Opt
 
 def update_meta(meta: Meta, **kwargs):
     """Decides whether 'meta' is a dataclass or a dict
-    and then updates existing fields or cretes new ones.
+    and then updates existing fields and creates new ones.
     
     ```python
     a = {'position': 0}
