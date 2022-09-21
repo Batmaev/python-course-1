@@ -21,7 +21,7 @@ SpecificationField = Tuple[
 because isinstance(var, Any), issubclass(float, Any) don't work.
 Also type(Any) != type."""
 
-Specification = Dataclass | Tuple[SpecificationField, ...]
+Specification = Type[Dataclass] | Tuple[SpecificationField, ...]
 
 
 class SpecificationError(Exception):
