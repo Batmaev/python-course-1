@@ -3,12 +3,17 @@ from unittest import TestCase
 
 from stem.meta import MetaVerification, update_meta, get_meta_attr
 
-
 @dataclasses.dataclass
 class Example:
     a: int = 0
     b: float = 0.0
     c: list = dataclasses.field(default_factory=list)
+
+@dataclasses.dataclass
+class MetaNested:
+    n: float = 0.
+    e: Example = Example()
+    g: object = 'f'
 
 
 class CoreTest(TestCase):
@@ -44,3 +49,25 @@ class CoreTest(TestCase):
 
         verification = MetaVerification.verify(example_dict, specification)
         self.assertFalse(verification.checked_success)
+
+
+    def test_recursive_verify(self):
+        meta_nested = MetaNested(
+            g = MetaNested()
+        )
+
+        specification = (
+            ('n', float), 
+            ('e', Example), 
+            ('g', (
+                ('n', float),
+                ('e', Example),
+                ('g', str)
+            ))
+        )
+
+        verification = MetaVerification.verify(meta_nested, specification)
+        self.assertTrue(verification.checked_success)
+
+        verification = MetaVerification.verify(meta_nested, MetaNested)
+        self.assertTrue(verification.checked_success)
