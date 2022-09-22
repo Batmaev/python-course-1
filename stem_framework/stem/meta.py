@@ -14,8 +14,8 @@ from stem.core import Dataclass
 Meta = dict | Dataclass
 
 SpecificationField = Tuple[
-    object,                                         # Key
-    Type | Tuple[Type, ...] | 'SpecificationField'  # Value
+    str,                                       # Key
+    Type | Tuple[Type, ...] | 'Specification'  # Value
 ]
 """You must use `object` instead of `Any` in type specifications,
 because isinstance(var, Any), issubclass(float, Any) don't work.
@@ -42,7 +42,9 @@ class MetaVerification:
         self.error = errors
         # why not self.errors?
 
-        self.checked_success = errors == ()
+    @property
+    def checked_success(self):
+        return self.error == ()
 
 
     @staticmethod
