@@ -49,7 +49,7 @@ class MetaVerification:
 
     @staticmethod
     def verify(meta: Meta,
-               specification: Optional[Specification] = None) -> "MetaVerification":
+               specification: Specification) -> "MetaVerification":
 
         if is_dataclass(meta):
             meta_keys = meta.__dataclass_fields__.keys()
