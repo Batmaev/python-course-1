@@ -17,7 +17,7 @@ SpecificationField = Tuple[
     str,                                       # Key
     Type | Tuple[Type, ...] | 'Specification'  # Value
 ]
-"""You must use `object` instead of `Any` in type specifications,
+"""You must use `object` instead of `Any` in your SpecificationFields,
 because isinstance(var, Any), issubclass(float, Any) don't work.
 Also type(Any) != type."""
 
@@ -113,22 +113,13 @@ class MetaVerification:
 
 def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Optional[Any]:
 
-    # maybe 'meta' is dict:
     try:
-        return meta[key]
-    except KeyError:
-        # 'meta' is dict but doesn't have required field
-        return default
-    except TypeError:
-        # 'meta' is not a dict => we will check next option
-        pass
+         # maybe 'meta' is dict
+        return meta.get(key, default)
 
-    # maybe 'meta' is dataclass:
-    try:
-        return getattr(meta, key)
     except AttributeError:
-        # meta probably is a dataclass but doesn't have the required field
-        return default
+        # maybe 'meta' is dataclass
+        return getattr(meta, key, default)
 
 
 
@@ -164,5 +155,4 @@ def update_meta(meta: Meta, **kwargs):
             setattr(meta, k, v)
     else:
         # then it should be a dict
-        for k, v in kwargs.items():
-            meta[k] = v
+        meta.update(kwargs)

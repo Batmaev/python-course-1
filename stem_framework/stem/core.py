@@ -30,7 +30,7 @@ class Named:
 class Dataclass(Protocol):
     __dataclass_fields__: Any
     #
-    # В Cython есть функция dataclasses.is_dataclass, 
+    # В Cpython есть функция dataclasses.is_dataclass, 
     # которая проверяет наличие поля __dataclass_fields__
     # https://github.com/python/cpython/blob/3.10/Lib/dataclasses.py
     #
