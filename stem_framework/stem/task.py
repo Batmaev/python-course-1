@@ -66,13 +66,13 @@ class FunctionDataTask(DataTask[T]):
 
 def data(func: Callable[[Meta], T] | None = None, specification: Specification | None = None, **settings) -> FunctionDataTask[T]:
     if func is not None:
-        return FunctionDataTask(func.__name__, func, specification, settings)
+        return FunctionDataTask(func.__name__, func, specification, **settings)
     else:
-        return lambda func : data(func, specification, settings)
+        return lambda func : data(func, specification, **settings)
 
 
 
-def task(func: Callable[[Meta, ...], T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T]:
+def task(func: Callable[[Meta, ...], T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
     if func is not None:
         arg_names_without_meta = tuple(arg for arg in func.__code__.co_varnames if arg != 'meta')
         return FunctionTask(func.__name__, func, arg_names_without_meta, specification, **settings)
