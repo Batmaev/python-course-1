@@ -8,7 +8,7 @@ Based on the metadata and with the help of the metadata processor, Mr. Nozik dec
 from dataclasses import dataclass, is_dataclass
 from typing import Optional, Any, Tuple, Type, Union
 
-from stem.core import Dataclass
+from .core import Dataclass
 
 
 Meta = dict | Dataclass

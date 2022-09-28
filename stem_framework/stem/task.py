@@ -2,6 +2,7 @@ from typing import TypeVar, Union, Tuple, Callable, Optional, Generic, Any, Iter
 from abc import ABC, abstractmethod
 from .core import Named
 from .meta import Specification, Meta
+from functools import reduce
 
 T = TypeVar("T")
 
@@ -63,25 +64,71 @@ class FunctionDataTask(DataTask[T]):
         return self._func(meta)
 
 
-def data(func: Callable[[Meta], T], specification: Optional[Specification] = None, **settings) -> FunctionDataTask[T]:
-    ...  # TODO()
+def data(func: Callable[[Meta], T] | None = None, specification: Specification | None = None, **settings) -> FunctionDataTask[T]:
+    if func is not None:
+        return FunctionDataTask(func.__name__, func, specification, settings)
+    else:
+        return lambda func : data(func, specification, settings)
 
 
 
-def task(func: Callable[[Meta, ...], T], specification: Optional[Specification] = None, **settings) -> FunctionTask[T]:
-    ... # TODO()
+def task(func: Callable[[Meta, ...], T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T]:
+    if func is not None:
+        arg_names_without_meta = tuple(arg for arg in func.__code__.co_varnames if arg != 'meta')
+        return FunctionTask(func.__name__, func, arg_names_without_meta, specification, **settings)
+    else:
+        return lambda func : task(func, specification, **settings)
 
 
 class MapTask(Task[Iterator[T]]):
     def __init__(self, func: Callable, dependence : Union[str, "Task"]):
-        ... # TODO()
+
+        self.func = func
+
+        if isinstance(dependence, str):
+            self.dependence_name = dependence
+        else:
+            self.dependence_name = dependence.name
+
+        # Нужно реализовать свойство name.
+        # По какой-то нелепой причине MapTask наследуется от Task,
+        # а Task наследуется от Named,
+        # в котором name определено как @property,
+        # которое возвращает свойство ._name
+        # Поэтому следующий костыль:
+        self._name = 'map_' + self.dependence_name
+
+    def transform(self, meta: Meta, /, **kwargs: Any):
+        # судя по тестам kwargs[dependance_name] это итератор
+        return map(self.func, kwargs[self.dependence_name])
+
 
 
 class FilterTask(Task[Iterator[T]]):
     def __init__(self, key: Callable, dependence: Union[str, "Task"]):
-        ...  # TODO()
+        self.key = key
+        
+        if isinstance(dependence, str):
+            self.dependence_name = dependence
+        else:
+            self.dependence_name = dependence.name
+
+        self._name = 'filter_' + self.dependence_name
+
+    def transform(self, meta: Meta, /, **kwargs: Any):
+        return filter(self.key, kwargs[self.dependence_name])
 
 
 class ReduceTask(Task[Iterator[T]]):
     def __init__(self, func: Callable, dependence: Union[str, "Task"]):
-        ...  # TODO()
+        self.func = func
+        
+        if isinstance(dependence, str):
+            self.dependence_name = dependence
+        else:
+            self.dependence_name = dependence.name
+
+        self._name = 'reduce_' + self.dependence_name
+
+    def transform(self, meta: Meta, /, **kwargs: Any):
+        return reduce(self.func, kwargs[self.dependence_name])
