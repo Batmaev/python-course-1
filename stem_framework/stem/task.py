@@ -72,7 +72,7 @@ def data(func: Callable[[Meta], T] | None = None, specification: Specification |
 
 
 
-def task(func: Callable[[Meta, ...], T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
+def task(func: Callable[..., T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
     if func is not None:
         arg_names_without_meta = tuple(arg for arg in func.__code__.co_varnames if arg != 'meta')
         return FunctionTask(func.__name__, func, arg_names_without_meta, specification, **settings)
