@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from stem.workspace import Workspace, IWorkspace, ProxyTask, LocalWorkspace
+from stem.workspace import Workspace, IWorkspace, ProxyTask, ILocalWorkspace
 from tests.example_task import int_range
 from tests.example_workspace import IntWorkspace, SubWorkspace, SubSubWorkspace
 
@@ -11,14 +11,14 @@ class WorkspaceTest(TestCase):
         self.workspace = IntWorkspace
 
     def test_instance(self):
-        self.assertIs(self.workspace, IntWorkspace())
+        self.assertTrue(isinstance(IntWorkspace(), self.workspace))
 
     def test_name(self):
         self.assertEqual("IntWorkspace", IntWorkspace.name)
         self.assertEqual("IntWorkspace", self.workspace.name)
 
     def test_subclass(self):
-        self.assertFalse(isinstance(IntWorkspace, type))
+        self.assertTrue(isinstance(IntWorkspace, type))
         self.assertTrue(isinstance(IntWorkspace, IWorkspace))
         self.assertTrue(issubclass(Workspace, type))
         self.assertTrue(issubclass(Workspace, IWorkspace))
@@ -49,8 +49,8 @@ class WorkspaceTest(TestCase):
     def test_default_workspace(self):
 
         workspace = Workspace.find_default_workspace(int_range)
-        self.assertTrue(isinstance(workspace, LocalWorkspace))
-        self.assertEqual("example_task", workspace.name)
+        self.assertTrue(isinstance(workspace, ILocalWorkspace))
+        self.assertEqual("IntWorkspace", workspace.name)
         self.assertIn("int_scale", workspace.tasks)
         self.assertIn("data_scale", workspace.tasks)
 

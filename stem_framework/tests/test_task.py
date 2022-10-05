@@ -14,7 +14,6 @@ class TaskTest(TestCase):
             self.assertEqual(i, r)
 
     def test_data_decorator(self):
-        self.assertEqual(int_range.__name__, "int_range")
         self.assertEqual(int_range.name, "int_range")
         self.assertTrue(isinstance(int_range, Task))
         for i, r in zip(range(0, 10, 1), int_range.data({})):
