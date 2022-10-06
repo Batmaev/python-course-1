@@ -232,5 +232,12 @@ class Workspace(ABCMeta, ILocalWorkspace):
         # .tasks and .workspaces are mentioned in the assignment,
         # .name is tested in tests (and isn't mentioned in the assignment)
 
+        def __new(userclass, *args, **kwargs):
+            return userclass
+
+        cls.__new__ = __new
+            # The class-object itself 
+            # must be returned on constructor call 
+            # of user classes.     -- quote from the assignment
 
         return cls

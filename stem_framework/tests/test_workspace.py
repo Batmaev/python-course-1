@@ -11,7 +11,7 @@ class WorkspaceTest(TestCase):
         self.workspace = IntWorkspace
 
     def test_instance(self):
-        self.assertTrue(isinstance(IntWorkspace(), self.workspace))
+        self.assertIs(self.workspace, IntWorkspace())
 
     def test_name(self):
         self.assertEqual("IntWorkspace", IntWorkspace.name)
