@@ -21,9 +21,7 @@ class Task(ABC, Generic[T], Named):
 
 
 class FunctionTask(Task[T]):
-    def __init__(self, name: str, func: Callable, dependencies: Tuple[Union[str, "Task"], ...],
-                 specification: Optional[Specification] = None,
-                 settings: Optional[Meta] = None):
+    def __init__(self, name: str, func: Callable, dependencies: Tuple[str | Task, ...], specification: Specification | None = None, settings: Meta | None = None):
         self._name = name
         self._func = func
         self.dependencies = dependencies

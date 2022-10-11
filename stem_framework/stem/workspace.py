@@ -85,7 +85,7 @@ class IWorkspace(ABC, Named):
                 if task_name == task_path.name:
                     return cls.tasks[task_name]
             for w in cls.workspaces:
-                if t := w.find_task(task_path) is not None:
+                if (t := w.find_task(task_path)) is not None:
                     return t
             return None
 
