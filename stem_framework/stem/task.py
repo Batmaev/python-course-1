@@ -27,6 +27,8 @@ class FunctionTask(Task[T]):
         self.dependencies = dependencies
         self.specification = specification
         self.settings = settings
+        self.__module__ = func.__module__ # this is needed for 
+                                          # IWorkspace.find_default_workspace
 
     def __call__(self, *args, **kwargs):
         return self._func(*args, **kwargs)

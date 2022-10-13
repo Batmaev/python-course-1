@@ -71,7 +71,7 @@ class IWorkspace(ABC, Named):
     def workspaces(self) -> set["IWorkspace"]:
         pass
 
-    @classmethod
+    @classmethod # in tests, it is used as a @classmethod
     def find_task(cls, task_path: Union[str, TaskPath]) -> Optional[Task]:
         if not isinstance(task_path, TaskPath):
             task_path = TaskPath(task_path)
@@ -132,14 +132,19 @@ class IWorkspace(ABC, Named):
                 if isinstance(t, IWorkspace):
                     workspaces.add(t)
 
-            module.__stem_workspace = LocalWorkspace(
+            module.__stem_workspace = create_workspace(
                 module.__name__, tasks, workspaces
             )
 
             return module.__stem_workspace
 
+def create_workspace(name, tasks = {}, workspaces = set()):
+    return type(name, (IWorkspace,), {'name': name, 'tasks': tasks, 'workspaces': workspaces})
+    # name, tasks and workspaces become class variables (not object fields),
+    # thus we can use them in .find_task and .has_task
 
-# I don't need separate classes Local and ILocal Workspace
+
+# I don't need classes Local and ILocal Workspace
 class ILocalWorkspace(IWorkspace):
 
     @property
@@ -153,7 +158,7 @@ class ILocalWorkspace(IWorkspace):
 
 class LocalWorkspace(ILocalWorkspace):
 
-    def __init__(self, name,  tasks=(), workspaces=()):
+    def __init__(self, name, tasks=(), workspaces=()):
         self._name = name
         self._tasks = tasks
         self._workspaces = workspaces
