@@ -15,13 +15,11 @@ class WorkspaceTest(TestCase):
 
     def test_name(self):
         self.assertEqual("IntWorkspace", IntWorkspace.name)
-        self.assertEqual("IntWorkspace", self.workspace.name)
 
     def test_subclass(self):
         self.assertTrue(isinstance(IntWorkspace, type))
-        self.assertTrue(isinstance(IntWorkspace, IWorkspace))
         self.assertTrue(issubclass(Workspace, type))
-        self.assertTrue(issubclass(Workspace, IWorkspace))
+        self.assertFalse(isinstance(666, IWorkspace))
 
     def test_task(self):
         tasks = [
@@ -48,13 +46,13 @@ class WorkspaceTest(TestCase):
 
     def test_default_workspace(self):
 
-        workspace = Workspace.find_default_workspace(int_range)
-        self.assertTrue(isinstance(workspace, ILocalWorkspace))
+        workspace = IWorkspace.find_default_workspace(int_range)
+        self.assertTrue(issubclass(workspace, IWorkspace))
         self.assertEqual("IntWorkspace", workspace.name)
         self.assertIn("int_scale", workspace.tasks)
         self.assertIn("data_scale", workspace.tasks)
 
-        workspace = Workspace.find_default_workspace(IntWorkspace.int_range_from_class)
+        workspace = IWorkspace.find_default_workspace(IntWorkspace.int_range_from_class)
         self.assertIs(workspace, self.workspace)
 
     def test_structure(self):

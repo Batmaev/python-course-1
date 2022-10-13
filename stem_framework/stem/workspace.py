@@ -139,8 +139,7 @@ class IWorkspace(ABC, Named):
             return module.__stem_workspace
 
 
-
-
+# I don't need separate classes Local and ILocal Workspace
 class ILocalWorkspace(IWorkspace):
 
     @property
@@ -160,77 +159,41 @@ class LocalWorkspace(ILocalWorkspace):
         self._workspaces = workspaces
 
 
-class Workspace(ABCMeta, ILocalWorkspace):
+class Workspace(ABCMeta):
     def __new__(mcls: type[Self], name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> Self:
 
+        # adds a lot of methods
+        if ILocalWorkspace not in bases:
+            bases += (IWorkspace,)
+
+        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
+        #
         # Method Resolution Order:
         #
         # Workspace             # calls super().__new__
         #   ABCMeta             # calls super().__new__
         #       type            # __new__ is executed and super()-sequence stops
-        #   ILocalWorkspace
-        #       IWorkspace
-        #           ABC
-        #           Named
-        #               object
-        #
-        cls = super().__new__(ABCMeta, name, bases, namespace, **kwargs)
-        #
-        # I use ABCMeta instead of mcls = Workspace
-        # in order to avoid toxic inheritance Workspace(ILocalWorkspace)
-        # which destroys class variable cls.workspaces
-        # 
+        #           object
+
+        cls.name = name
+
         try:
-            workspaces = set(cls.workspaces)
-        except AttributeError:
-            workspaces = set()
-        #
-        # However, the tests are supposed to check that cls is an instance of ILocalWorkspace
-        # So I recreate cls
-        # 
-        if ILocalWorkspace not in bases:
-            bases += (ILocalWorkspace,)
-        #
-        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
+            cls.workspaces = set(cls.workspaces)
+        except TypeError:
+            cls.workspaces = set()
 
-
-        cls_dict = {s: t for s, t in cls.__dict__.items() if not s.startswith('__')}
-
-        tasks_to_replace = {
-            s: ProxyTask(s, t)
-            for s, t in cls_dict.items() 
-            if not callable(t) and isinstance(t, Task)
-        }
-
-        for s, t in tasks_to_replace.items():
-            setattr(cls, s, t)
-            cls_dict[s] = t
-
-        for s, t in cls_dict.items():
+        for s, t in cls.__dict__.items():
             if isinstance(t, Task):
-                t._stem_workspace = cls 
-                # All tasks (ProxyTask attributes and task-methods) 
-                # must have the attribute _stem_workspace 
-                # which contains this workspace. -- quote from the assignment
+                if not callable(t):
+                    t = ProxyTask(s, t)  # Task-methods are required to be proxied
+                    setattr(cls, s, t)
+                t._stem_workspace = cls  # Tasks are required to have reference to the Workspace
 
-                # here we could have
-                # obj_dict[s] = t and
-                # setattr(obj, s, t)
-                # but `t` was a reference
-
-        tasks_to_show = {
-            s: t 
-            for s, t in cls_dict.items()
+        cls.tasks = {
+            s: t
+            for s, t in cls.__dict__.items()
             if isinstance(t, Task)
         }
-
-
-        cls._tasks = tasks_to_show      # @property .tasks = {return ._tasks} inherited from ILocalWorkspace
-        cls._workspaces = workspaces    # @property .workspaces — also inherited from ILocalWorkspace
-        cls._name = name                # @property .name — inherited from Named
-        #
-        # .tasks and .workspaces are mentioned in the assignment,
-        # .name is tested in tests (and isn't mentioned in the assignment)
 
         def __new(userclass, *args, **kwargs):
             return userclass
