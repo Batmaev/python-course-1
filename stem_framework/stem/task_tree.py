@@ -46,21 +46,24 @@ class TaskNode(Generic[T]):
 
         self._has_dependence_errors = self._unresolved_dependencies != [] or any(d._has_dependence_errors for d in self.dependencies)
 
-    def resolve_node(self, task: Task[T], workspace: IWorkspace | None = None) -> Optional["TaskNode[T]"]:
-        """Ищет task в дереве/корневом узле self. 
-
-        Если задан аругмент workspace и он не тот, который использовался при создании дерева,
-        создаётся новое одноразовое дерево и поиск осуществляется в нём.
-
-        Если узла не обнаружено, то возвращается None."""
-
-        if workspace is not None and workspace != self.workspace:
-            self = TaskNode(task, workspace)
+    def find_node(self, task: Task[T]) -> Optional["TaskNode[T]"]:
         if self.task == task:
             return self
         for d in self.dependencies:
             if (node := d.resolve_node(task)) is not None:
                 return node
+
+    def resolve_node(self, task: Task[T], workspace: IWorkspace | None = None) -> "TaskNode[T]":
+        """«Кешированная» версия TaskNode.__init__
+
+        Пытается найти task в дереве/корневом узле self.
+        Если не находит, а также если аргумент workspace не тот, который использовался при создании дерева,
+        то вызывает TaskNode.__init__"""
+
+        if workspace is None or workspace == self.workspace:
+            if (node := self.find_node(task)) is not None:
+                return node
+        return TaskNode(task, workspace)
 
 
 class TaskTree(TaskNode): # code reuse

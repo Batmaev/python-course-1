@@ -63,4 +63,29 @@ class TaskMaster:
         self.task_tree = task_tree
 
     def execute(self, meta: Meta, task: Task[T], workspace: Optional[Workspace] = None) -> TaskResult[T]:
-        pass  # TODO()
+
+        if self.task_tree is not None:
+            task_node = self.task_tree.resolve_node(task, workspace)
+        else:
+            task_node = TaskNode(task, workspace)
+
+        if task.specification is not None:
+            verif = MetaVerification.verify(meta, task.specification)
+            if not verif.checked_success:
+                return TaskResult(
+                    TaskStatus.META_ERROR,
+                    task_node,
+                    TaskMetaError(task_node, verif)
+                )
+
+        if task_node.has_dependence_errors:
+            return TaskResult(
+                TaskStatus.DEPENDENCIES_ERROR,
+                task_node
+            )
+
+        return TaskResult(
+            TaskStatus.CONTAINS_DATA,
+            task_node,
+            lazy_data = lambda: self.task_runner.run(meta, task_node)
+        )

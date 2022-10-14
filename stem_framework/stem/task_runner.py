@@ -2,7 +2,7 @@ import os
 from typing import Generic, TypeVar
 from abc import ABC, abstractmethod
 
-from .meta import Meta
+from .meta import Meta, get_meta_attr
 from .task_tree import TaskNode
 
 T = TypeVar("T")
@@ -17,7 +17,15 @@ class TaskRunner(ABC, Generic[T]):
 
 class SimpleRunner(TaskRunner[T]):
     def run(self, meta: Meta, task_node: TaskNode[T]) -> T:
-        pass  # TODO(Assignment 5)
+        assert not task_node.has_dependence_errors
+        kwargs = {
+            t.task.name: self.run(
+                get_meta_attr(meta, t.task.name, {}),
+                t
+            )
+            for t in task_node.dependencies
+        }
+        return task_node.task.transform(meta, **kwargs)
 
 
 class ThreadingRunner(TaskRunner[T]):
