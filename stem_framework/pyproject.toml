@@ -5,3 +5,6 @@ version = "0.0.0"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+stem_cli_main = "stem.cli_main:stem_cli_main"
