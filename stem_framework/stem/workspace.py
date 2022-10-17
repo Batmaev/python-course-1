@@ -140,6 +140,11 @@ def create_workspace(name, tasks = {}, workspaces = set()):
 
 
 # I don't need classes Local and ILocal Workspace
+#
+# They are not valid workspaces
+# because .tasks and .workspaces
+# must be not @properties, but class variables
+#
 class ILocalWorkspace(IWorkspace):
 
     @property
