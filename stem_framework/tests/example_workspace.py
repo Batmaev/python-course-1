@@ -33,7 +33,8 @@ class IntWorkspace(metaclass=Workspace):
     # because these classes cannot be instantiated
     # as the assignment requires.
     #
-    # Such classes can only have @staticmethods and @classmethods
+    # Such classes can only have class variables,
+    # @staticmethods and @classmethods
 
     @data
     @staticmethod
