@@ -61,15 +61,9 @@ class ProxyTask(Task[T]):
 
 class IWorkspace(ABC, Named):
 
-    @property
-    @abstractmethod
-    def tasks(self) -> dict[str, Task]:
-        pass
+    tasks: dict[str, Task] = NotImplemented
 
-    @property
-    @abstractmethod
-    def workspaces(self) -> set["IWorkspace"]:
-        pass
+    workspaces: set["IWorkspace"] = NotImplemented
 
     @classmethod # in tests, it is used as a @classmethod
     def find_task(cls, task_path: Union[str, TaskPath]) -> Optional[Task]:
@@ -93,8 +87,9 @@ class IWorkspace(ABC, Named):
     def has_task(cls, task_path: Union[str, TaskPath]) -> bool:
         return cls.find_task(task_path) is not None
 
-    def get_workspace(self, name) -> Optional["IWorkspace"]:
-        for workspace in self.workspaces:
+    @classmethod
+    def get_workspace(cls, name) -> Optional["IWorkspace"]:
+        for workspace in cls.workspaces:
             if workspace.name == name:
                 return workspace
         return None
@@ -129,7 +124,7 @@ class IWorkspace(ABC, Named):
                 t = getattr(module, s)
                 if isinstance(t, Task):
                     tasks[s] = t
-                if isinstance(t, IWorkspace):
+                if isinstance(t, type) and issubclass(t, IWorkspace):
                     workspaces.add(t)
 
             module.__stem_workspace = create_workspace(

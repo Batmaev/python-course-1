@@ -74,8 +74,18 @@ def data(func: Callable[[Meta], T] | None = None, specification: Specification |
 
 def task(func: Callable[..., T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
     if func is not None:
-        arg_names_without_meta = tuple(arg for arg in func.__code__.co_varnames if arg != 'meta')
-        return FunctionTask(func.__name__, func, arg_names_without_meta, specification, **settings)
+        try:
+            # usual func
+            args = func.__code__.co_varnames
+        except AttributeError:
+            # @classmethod or @staticmethod
+            args = func.__func__.__code__.co_varnames
+
+        args_which_are_dependencies = tuple(
+            arg for arg in args
+            if arg not in ('self', 'cls', 'meta')
+        )
+        return FunctionTask(func.__name__, func, args_which_are_dependencies, specification, **settings)
     else:
         return lambda func : task(func, specification, **settings)
 
