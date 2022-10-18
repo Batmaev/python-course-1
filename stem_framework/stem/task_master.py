@@ -1,11 +1,11 @@
 from enum import Enum, auto
-from typing import Optional, Callable, TypeVar, Generic
+from typing import Optional, Callable, Type, TypeVar, Generic
 from functools import cached_property
 from dataclasses import dataclass, field
 
 from .meta import Meta, MetaVerification, Specification
 from .task import Task
-from .workspace import Workspace
+from .workspace import IWorkspace
 from .task_runner import TaskRunner, SimpleRunner
 from .task_tree import TaskNode, TaskTree
 
@@ -24,7 +24,7 @@ class TaskMetaError(Generic[T]):
         return self.task_node.task
 
     @property
-    def specification(self) -> Specification:
+    def specification(self) -> Specification | None:
         return self.task.specification
 
     @property
@@ -45,10 +45,10 @@ class TaskResult(Generic[T]):
     status: TaskStatus
     task_node: TaskNode[T]
     meta_errors: Optional[TaskMetaError] = None
-    lazy_data: Callable[[], T] = lambda: None
+    lazy_data: Callable[[], T] = NotImplemented
 
     @cached_property
-    def data(self) -> Optional[T]:
+    def data(self) -> T:
         try:
             return self.lazy_data()
         except Exception as e:
@@ -56,13 +56,13 @@ class TaskResult(Generic[T]):
             raise e
 
 
-class TaskMaster:
+class TaskMaster(Generic[T]):
 
     def __init__(self, task_runner: TaskRunner[T] = SimpleRunner(), task_tree: Optional[TaskTree] = None):
         self.task_runner = task_runner
         self.task_tree = task_tree
 
-    def execute(self, meta: Meta, task: Task[T], workspace: Optional[Workspace] = None) -> TaskResult[T]:
+    def execute(self, meta: Meta, task: Task[T], workspace: Optional[Type[IWorkspace]] = None) -> TaskResult[T]:
 
         if self.task_tree is not None:
             task_node = self.task_tree.resolve_node(task, workspace)

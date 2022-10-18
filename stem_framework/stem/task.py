@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, Tuple, Callable, Optional, Generic, Any, Iterator
+from typing import Type, TypeVar, Union, Tuple, Callable, Optional, Generic, Any, Iterator, overload
 from abc import ABC, abstractmethod
 from .core import Named
 from .meta import Specification, Meta
@@ -11,6 +11,7 @@ class Task(ABC, Generic[T], Named):
     dependencies: Tuple[Union[str, "Task"], ...]
     specification: Optional[Specification] = None
     settings: Optional[Meta] = None
+    _stem_workspace: Type = NotImplemented
 
     def check_by_meta(self, meta: Meta):
         pass
@@ -63,16 +64,30 @@ class FunctionDataTask(DataTask[T]):
     def data(self, meta: Meta) -> T:
         return self._func(meta)
 
+@overload
+def data(func: Callable[[Meta], T], specification: Specification | None = None, **settings) -> FunctionDataTask[T]:
+    pass
 
-def data(func: Callable[[Meta], T] | None = None, specification: Specification | None = None, **settings) -> FunctionDataTask[T]:
+@overload
+def data(func: None, specification: Specification | None = None, **settings) -> Callable[[Callable[..., T]], FunctionDataTask[T]]:
+    pass
+
+def data(func: Callable[[Meta], T] | None = None, specification: Specification | None = None, **settings) -> FunctionDataTask[T] | Callable[[Callable[..., T]], FunctionDataTask[T]]:
     if func is not None:
         return FunctionDataTask(func.__name__, func, specification, **settings)
     else:
         return lambda func : data(func, specification, **settings)
 
 
+@overload
+def task(func: Callable[..., T], specification = None, **settings) -> FunctionTask[T]:
+    pass
 
-def task(func: Callable[..., T] | None = None, specification: Optional[Specification] = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
+@overload
+def task(func = None, specification: Specification | None = None, **settings) -> FunctionTask:
+    pass
+
+def task(func: Callable[..., T] | None = None, specification: Specification | None = None, **settings) -> FunctionTask[T] | Callable[[Callable[..., T]], FunctionTask[T]]:
     if func is not None:
         try:
             # usual func

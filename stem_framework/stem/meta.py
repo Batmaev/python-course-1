@@ -1,3 +1,4 @@
+# type: ignore
 """Metadata is data that provides information about other data.
 
 Alexander Nozik in his pet-project 'DataForge' sees metadata as a user-defined tree of values.
@@ -6,7 +7,7 @@ Based on the metadata and with the help of the metadata processor, Mr. Nozik dec
 """
 
 from dataclasses import dataclass, is_dataclass
-from typing import Optional, Any, Tuple, Type, Union
+from typing import Any, Tuple, Type, Union
 
 from .core import Dataclass
 
@@ -69,10 +70,10 @@ class MetaVerification:
         errors = []
         for required_key in specification_keys:
             if is_dataclass(specification):
-                required_types = specification.__dataclass_fields__[required_key].type
+                required_types: type = specification.__dataclass_fields__[required_key].type
             else:
                 # specification was tuple of pairs of types and now is dict
-                required_types = specification[required_key]
+                required_types: SpecificationField = specification[required_key]
 
             if required_key not in meta_keys:
                 errors.append(
@@ -111,7 +112,7 @@ class MetaVerification:
         return MetaVerification(*errors)
 
 
-def get_meta_attr(meta : Meta, key : str, default : Optional[Any] = None) -> Optional[Any]:
+def get_meta_attr(meta: Meta, key: str, default: Any = None) -> Any:
 
     try:
          # maybe 'meta' is dict

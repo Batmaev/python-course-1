@@ -1,7 +1,5 @@
-from abc import abstractmethod, ABC, ABCMeta
 from types import ModuleType
-from typing import Optional, Any, TypeVar, Union
-from typing_extensions import Self
+from typing import Dict, Optional, Any, Set, Type, TypeVar, Union
 from importlib import import_module
 
 from .core import Named
@@ -59,11 +57,13 @@ class ProxyTask(Task[T]):
         return self._task.transform(meta, **kwargs)
 
 
-class IWorkspace(ABC, Named):
+class IWorkspace:
 
     tasks: dict[str, Task] = NotImplemented
 
     workspaces: set["IWorkspace"] = NotImplemented
+
+    name: str = NotImplemented
 
     @classmethod # in tests, it is used as a @classmethod
     def find_task(cls, task_path: Union[str, TaskPath]) -> Optional[Task]:
@@ -103,15 +103,15 @@ class IWorkspace(ABC, Named):
         }
 
     @staticmethod
-    def find_default_workspace(task: Task) -> "IWorkspace":
-        try:
+    def find_default_workspace(task: Task) -> Type["IWorkspace"]:
+        if hasattr(task, '_stem_workspace') and task._stem_workspace != NotImplemented:
             return task._stem_workspace
-        except AttributeError:
+        else:
             module = import_module(task.__module__)
             return IWorkspace.module_workspace(module)
 
     @staticmethod
-    def module_workspace(module: ModuleType) -> "IWorkspace":
+    def module_workspace(module: ModuleType) -> Type["IWorkspace"]:
         try:
             return module.__stem_workspace
 
@@ -127,14 +127,21 @@ class IWorkspace(ABC, Named):
                 if isinstance(t, type) and issubclass(t, IWorkspace):
                     workspaces.add(t)
 
-            module.__stem_workspace = create_workspace(
+            module.__stem_workspace = create_workspace(  # type: ignore
                 module.__name__, tasks, workspaces
             )
 
             return module.__stem_workspace
 
-def create_workspace(name, tasks = {}, workspaces = set()):
-    return type(name, (IWorkspace,), {'name': name, 'tasks': tasks, 'workspaces': workspaces})
+
+def create_workspace(
+        name: str, tasks: Dict[str, Task] = {},
+        workspaces: Set[Type["IWorkspace"]] = set()
+    ) -> Type["IWorkspace"]:
+
+    return type(name, (IWorkspace,), {
+        'name': name, 'tasks': tasks, 'workspaces': workspaces
+    })
     # name, tasks and workspaces become class variables (not object fields),
     # thus we can use them in .find_task and .has_task
 
@@ -145,40 +152,41 @@ def create_workspace(name, tasks = {}, workspaces = set()):
 # because .tasks and .workspaces
 # must be not @properties, but class variables
 #
-class ILocalWorkspace(IWorkspace):
+# class ILocalWorkspace(IWorkspace):
 
-    @property
-    def tasks(self) -> dict[str, Task]:
-        return self._tasks
+#     @property
+#     def tasks(self) -> dict[str, Task]:
+#         return self._tasks
 
-    @property
-    def workspaces(self) -> set["IWorkspace"]:
-        return self._workspaces
-
-
-class LocalWorkspace(ILocalWorkspace):
-
-    def __init__(self, name, tasks=(), workspaces=()):
-        self._name = name
-        self._tasks = tasks
-        self._workspaces = workspaces
+#     @property
+#     def workspaces(self) -> set["IWorkspace"]:
+#         return self._workspaces
 
 
-class Workspace(ABCMeta):
-    def __new__(mcls: type[Self], name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> Self:
+# class LocalWorkspace(ILocalWorkspace):
 
-        # adds a lot of methods
-        if ILocalWorkspace not in bases:
+#     def __init__(self, name, tasks=(), workspaces=()):
+#         self._name = name
+#         self._tasks = tasks
+#         self._workspaces = workspaces
+
+
+class Workspace(type, IWorkspace):
+    def __new__(mcls: type["Workspace"], name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> Type[IWorkspace]:
+
+        # otherwise for some reason IWorkspace.@classmethods
+        # will use cls = Workspace instead of cls = userclass
+        if IWorkspace not in bases:
             bases += (IWorkspace,)
 
-        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
+        cls: Type[IWorkspace] = super().__new__(mcls, name, bases, namespace, **kwargs)  # type: ignore
         #
         # Method Resolution Order:
         #
         # Workspace             # calls super().__new__
-        #   ABCMeta             # calls super().__new__
-        #       type            # __new__ is executed and super()-sequence stops
-        #           object
+        #    type               # __new__ is executed and super()-sequence stops
+        #    IWorkspace
+        #        object
 
         cls.name = name
 
@@ -203,7 +211,7 @@ class Workspace(ABCMeta):
         def __new(userclass, *args, **kwargs):
             return userclass
 
-        cls.__new__ = __new
+        cls.__new__ = __new  # type: ignore
             # The class-object itself 
             # must be returned on constructor call 
             # of user classes.     -- quote from the assignment

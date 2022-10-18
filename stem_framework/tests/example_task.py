@@ -25,7 +25,7 @@ def int_range(meta: Meta)-> Iterator[int]:
 @data
 def float_range(meta: Meta) -> Iterator[float]:
     """Source of double number"""
-    opts = meta.get("start", 0), meta.get("stop", 1), meta.get("step", 0.1)
+    opts = get_meta_attr(meta, "start", 0), get_meta_attr(meta, "stop", 1), get_meta_attr(meta, "step", 0.1)
     for i in np.arange(*opts, dtype="f"):
         yield i
 
