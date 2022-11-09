@@ -12,7 +12,7 @@ class Example:
 @dataclasses.dataclass
 class MetaNested:
     n: float = 0.
-    e: Example = Example()
+    e: Example = dataclasses.field(default_factory = Example)
     g: object = 'f'
 
 
@@ -29,7 +29,7 @@ class CoreTest(TestCase):
         example = Example()
         update_meta(example, a=1, d="D")
         self.assertEqual(example.a, 1)
-        self.assertEqual(example.d, "D")
+        self.assertEqual(example.d, "D")  # type: ignore
 
     def test_verify(self):
         example = Example()
