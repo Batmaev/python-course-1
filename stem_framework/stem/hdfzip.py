@@ -21,7 +21,7 @@ def read_zip_print_hdf5(input_path, output_path, header_size=24, size_of_innermo
             for channel_no, filename in enumerate(input_file.namelist()):
                 with input_file.open(filename) as subfile:
                     for entry_no in range(N_entries):
-                        subfile.seek(header_size)
+                        subfile.seek(header_size, 1)
                         entry = np.frombuffer(subfile.read(entry_size), dtype)
                         dataset[entry_no, channel_no, :] = entry
 
