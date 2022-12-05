@@ -124,7 +124,7 @@ class IWorkspace:
                 t = getattr(module, s)
                 if isinstance(t, Task):
                     tasks[s] = t
-                if isinstance(t, type) and issubclass(t, IWorkspace):
+                if isinstance(t, IWorkspace) or isinstance(t, type) and issubclass(t, IWorkspace):
                     workspaces.add(t)
 
             module.__stem_workspace = create_workspace(  # type: ignore
@@ -197,9 +197,9 @@ class Workspace(type, IWorkspace):
 
         for s, t in cls.__dict__.items():
             if isinstance(t, Task):
-                if not callable(t):
-                    t = ProxyTask(s, t)  # Task-methods are required to be proxied
-                    setattr(cls, s, t)
+                # if callable(t):
+                #     t = ProxyTask(s, t)  # Task-methods are required to be proxied (but they cannot exist,
+                #     setattr(cls, s, t)   # because we redefine __new__ and and no objects can be created)
                 t._stem_workspace = cls  # Tasks are required to have reference to the Workspace
 
         cls.tasks = {

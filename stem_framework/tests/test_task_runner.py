@@ -18,7 +18,7 @@ class RunnerTest(TestCase):
         self._run(runner)
 
     def test_threading(self):
-        runner = ThreadingRunner()
+        runner = ThreadingRunner(5)
         self._run(runner)
 
     def test_async(self):

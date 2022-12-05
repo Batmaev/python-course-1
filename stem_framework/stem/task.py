@@ -57,6 +57,7 @@ class FunctionDataTask(DataTask[T]):
         self._func = func
         self.specification = specification
         self.settings = settings
+        self.__module__ = func.__module__
 
     def __call__(self, *args, **kwargs):
         return self._func(*args, **kwargs)
