@@ -62,7 +62,7 @@ class TaskMaster(Generic[T]):
         self.task_runner = task_runner
         self.task_tree = task_tree
 
-    def execute(self, meta: Meta, task: Task[T], workspace: Optional[Type[IWorkspace]] = None) -> TaskResult[T]:
+    def execute(self, meta: Meta, task: Task[T], workspace: IWorkspace | Type[IWorkspace] | None = None) -> TaskResult[T]:
 
         if self.task_tree is not None:
             task_node = self.task_tree.resolve_node(task, workspace)

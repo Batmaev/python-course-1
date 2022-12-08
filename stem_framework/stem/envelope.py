@@ -1,15 +1,16 @@
 import array
 import mmap
 from asyncio import StreamReader, StreamWriter
-from io import RawIOBase, BufferedReader, BytesIO
+from io import BufferedRWPair, RawIOBase, BufferedReader, BytesIO
 from json import JSONEncoder
-from typing import Optional, Union, Dict
+from typing import Union, Dict, BinaryIO
 from dataclasses import is_dataclass, asdict
 import json
 from .meta import Meta
 
 
-Binary = Union[bytes, bytearray, memoryview, array.array, mmap.mmap]
+Binary = Union[bytes, bytearray, memoryview, mmap.mmap] # Стёр array.array, поскольку непонятно, 
+                                                        # как скастовать его к T@TaskResult
 
 
 class MetaEncoder(JSONEncoder):
@@ -35,9 +36,9 @@ class Envelope:
         return str(self.meta)
 
     @staticmethod
-    def read(input: BufferedReader | BytesIO) -> "Envelope":
+    def read(input: BufferedReader | BytesIO | BinaryIO | BufferedRWPair) -> "Envelope":
         assert b'#~'   == input.read(2), "Envelope byte sequence doesn't start with b'#~'"
-        assert b'DF02' == input.read(4), 'Envelope type (version) is not DF02'
+        assert b'DF02' == input.read(4), "Envelope type (version) is not DF02"
         input.read(2) # MetaType: XML or YAML
 
         metaLength = int.from_bytes(input.read(4))
@@ -49,7 +50,7 @@ class Envelope:
             data = input.read(dataLength)
         else:
             data = mmap.mmap(input.fileno(), dataLength, offset = input.tell())
-            # will raise an exception if 'input' is BytesIO and dataLength > _MAX_SIZE
+            # will raise an exception if 'input' is not a file and dataLength > _MAX_SIZE
 
         assert b'~#' == input.read(2), "Envelope byte sequence doesn't end with b'~#'"
 
@@ -68,7 +69,7 @@ class Envelope:
         return output.read()
 
 
-    def write_to(self, output: RawIOBase | BytesIO):
+    def write_to(self, output: RawIOBase | BytesIO | BinaryIO | BufferedRWPair):
         output.write(b'#~')
         output.write(b'DF02')
         output.write(b'..')
@@ -77,7 +78,10 @@ class Envelope:
         output.write(len(meta_str ).to_bytes(4))
         output.write(len(self.data).to_bytes(4))
         output.write(meta_str)
-        output.write(self.data)
+        if isinstance(output, BinaryIO):
+            output.write(bytes(self.data))
+        else:
+            output.write(self.data)
 
         output.write(b'~#')
 

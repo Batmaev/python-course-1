@@ -48,7 +48,7 @@ class UnitHandler(StreamRequestHandler):
                     else:
                         resp = Envelope({
                             'status': 'failed',
-                            'error' : res.status
+                            'error' : str(res.status)
                         })
 
             case 'structure':

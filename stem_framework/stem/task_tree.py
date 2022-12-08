@@ -24,7 +24,7 @@ class TaskNode(Generic[T]):
     def has_dependence_errors(self) -> bool:
         return self._has_dependence_errors
 
-    def __init__(self, task: Task, workspace: Type[IWorkspace] | None = None):
+    def __init__(self, task: Task, workspace: IWorkspace | Type[IWorkspace] | None = None):
         if workspace is not None:
             workspace_ = workspace
         else:
@@ -53,7 +53,7 @@ class TaskNode(Generic[T]):
             if (node := d.resolve_node(task)) is not None:
                 return node
 
-    def resolve_node(self, task: Task[T], workspace: Type[IWorkspace] | None = None) -> "TaskNode[T]":
+    def resolve_node(self, task: Task[T], workspace: IWorkspace | Type[IWorkspace] | None = None) -> "TaskNode[T]":
         """«Кешированная» версия TaskNode.__init__
 
         Пытается найти task в дереве/корневом узле self.
