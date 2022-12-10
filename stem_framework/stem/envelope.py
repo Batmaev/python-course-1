@@ -37,12 +37,14 @@ class Envelope:
 
     @staticmethod
     def read(input: BufferedReader | BytesIO | BinaryIO | BufferedRWPair) -> "Envelope":
-        assert b'#~'   == input.read(2), "Envelope byte sequence doesn't start with b'#~'"
+        assert b'#~'   == input.read(2), "Envelope header doesn't start with b'#~'"
         assert b'DF02' == input.read(4), "Envelope type (version) is not DF02"
         input.read(2) # MetaType: XML or YAML
 
         metaLength = int.from_bytes(input.read(4))
         dataLength = int.from_bytes(input.read(4))
+
+        assert b'~#\r\n' == input.read(4), r"Envelope header doesn't end with b'~#\r\n'"
 
         meta = json.loads(input.read(metaLength))
 
@@ -51,8 +53,6 @@ class Envelope:
         else:
             data = mmap.mmap(input.fileno(), dataLength, offset = input.tell())
             # will raise an exception if 'input' is not a file and dataLength > _MAX_SIZE
-
-        assert b'~#' == input.read(2), "Envelope byte sequence doesn't end with b'~#'"
 
         return Envelope(meta, data)
 
@@ -77,18 +77,18 @@ class Envelope:
 
         output.write(len(meta_str ).to_bytes(4))
         output.write(len(self.data).to_bytes(4))
+        output.write(b'~#\r\n')
+
         output.write(meta_str)
         if isinstance(output, BinaryIO):
             output.write(bytes(self.data))
         else:
             output.write(self.data)
 
-        output.write(b'~#')
-
 
     @staticmethod
     async def async_read(reader: StreamReader) -> "Envelope":
-        pass  # TODO(Assignment 11)
+        await reader.read(2)
 
     async def async_write_to(self, writer: StreamWriter):
         pass  # TODO(Assignment 11)
