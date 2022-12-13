@@ -20,13 +20,13 @@ class UnitHandler(StreamRequestHandler):
 
     def handle(self) -> None:
         logging.debug('handle entered')
-        self.envelope = Envelope.read(self.rfile)
+        request = Envelope.read(self.rfile)
 
-        logging.debug(f"server receives command: {get_meta_attr(self.envelope.meta, 'command')}")
+        logging.debug(f"server receives command: {get_meta_attr(request.meta, 'command')}")
 
-        match get_meta_attr(self.envelope.meta, 'command'):
+        match get_meta_attr(request.meta, 'command'):
             case 'run':
-                task_path = get_meta_attr(self.envelope.meta, 'task_path')
+                task_path = get_meta_attr(request.meta, 'task_path')
                 task = self.workspace.find_task(task_path)
                 if task is None:
                     resp = Envelope({
@@ -35,7 +35,7 @@ class UnitHandler(StreamRequestHandler):
                     })
                 else:
                     res = self.task_master.execute(
-                        get_meta_attr(self.envelope.meta, 'task_meta', {}),
+                        get_meta_attr(request.meta, 'task_meta', {}),
                         task,
                         self.workspace
                     )
@@ -87,16 +87,19 @@ class UnitHandler(StreamRequestHandler):
                                           # но клиент отключается после первого
 
 
-def start_unit(workspace: IWorkspace, host: str, port: int, powerfullity: int | None = None) -> TCPServer:
-    UnitHandler.workspace = workspace
-    UnitHandler.task_tree = None
-    UnitHandler.task_master = TaskMaster()
-    UnitHandler.powerfullity = powerfullity
+def start_unit(workspace: IWorkspace, host: str, port: int, powerfullity = 666) -> TCPServer:
+    # Нужно создать новый тип, чтобы у серверов могли быть разные powerfullity
+    requestHandlerClass = type(f'Server@{host}:{port}', (UnitHandler,), {
+        'workspace': workspace,
+        'task_tree': None,
+        'task_master': TaskMaster(),
+        'powerfullity': powerfullity
+    })
     TCPServer.allow_reuse_address = True # иначе нужно будет ждать минуту, прежде чем перезапускать сервер
-    return TCPServer((host, port), UnitHandler)
+    return TCPServer((host, port), requestHandlerClass)
 
 
-def start_unit_in_subprocess(workspace: IWorkspace, host: str, port: int, powerfullity: Optional[int] = None) -> Tuple[Thread, TCPServer]:
+def start_unit_in_subprocess(workspace: IWorkspace, host: str, port: int, powerfullity = 666) -> Tuple[Thread, TCPServer]:
     server = start_unit(workspace, host, port, powerfullity)
     thread = Thread(target = server.serve_forever)
     thread.start()
